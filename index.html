@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #back {
+            background-color: #f0f0f0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23ff7b7b' fill-opacity='0.26'%3E%3Cpath fill-rule='evenodd' d='M0 0h40v40H0V0zm40 40h40v40H40V40zm0-40h2l-2 2V0zm0 4l4-4h2l-6 6V4zm0 4l8-8h2L40 10V8zm0 4L52 0h2L40 14v-2zm0 4L56 0h2L40 18v-2zm0 4L60 0h2L40 22v-2zm0 4L64 0h2L40 26v-2zm0 4L68 0h2L40 30v-2zm0 4L72 0h2L40 34v-2zm0 4L76 0h2L40 38v-2zm0 4L80 0v2L42 40h-2zm4 0L80 4v2L46 40h-2zm4 0L80 8v2L50 40h-2zm4 0l28-28v2L54 40h-2zm4 0l24-24v2L58 40h-2zm4 0l20-20v2L62 40h-2zm4 0l16-16v2L66 40h-2zm4 0l12-12v2L70 40h-2zm4 0l8-8v2l-6 6h-2zm4 0l4-4v2l-2 2h-2z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body >
+    <div id="back" class="p-10">
+        <div id="svg-container" class="flex flex-col gap-10 justify-center items-center" style="">
+        </div>
+    </div>
+   
+    
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script>
+        const makeGraph = (data, label) => {
+
+            const margin = {top: 30, right: 20, bottom: 30, left: 40}
+            const width = 960 - margin.left - margin.right
+            const height = 500 - margin.top - margin.bottom
+
+            const x = d3.scaleBand()
+                .domain(data.map(d => d[0]))
+                .range([0, width])
+                .padding(0.1)
+
+            let domain = []
+            if (label === "Longest Runtime in Minutes") {
+                domain = [d3.min(data, d => d[1]) - 10, d3.max(data, d => d[1]) + 10]
+            } else {
+                domain = [0, 5]
+            }
+            
+            const y = d3.scaleLinear()
+                .domain(domain)
+                .range([height, 0])
+
+            const color = d3.scaleOrdinal()
+                .domain(data.map(d => d[0]))
+                .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse())
+
+            const svg = d3.select("#svg-container")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .attr("class", "shadow-lg rounded-lg bg-white m-10 bg-opacity-75")
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`)
+
+            g.append("g")
+                .attr("transform", `translate(0, ${height})`)
+                .call(d3.axisBottom(x))
+
+            g.append("g")
+                .call(d3.axisLeft(y).ticks(10))
+
+            g.selectAll(".bar")
+                .data(data)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d[0]))
+                .attr("y", d => y(d[1]))
+                .attr("width", x.bandwidth())
+                .attr("height", d => height - y(d[1]))
+                .attr("fill", d => color(d[0]))
+
+            g.append("text")
+                .attr("x", width / 2)
+                .attr("y", 20)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .text(label)
+
+        }
+
+        const makeLineGragh = (data, label) => {
+            const margin = {top: 30, right: 20, bottom: 30, left: 40}
+            const width = 960 - margin.left - margin.right
+            const height = 500 - margin.top - margin.bottom
+
+            const x = d3.scaleLinear()
+                .domain(d3.extent(data, d => d[0]))
+                .range([0, width])
+
+            let domain = []
+            if (label === "Longest Runtime in Minutes") {
+                domain = [d3.min(data, d => d[1]) - 10, d3.max(data, d => d[1]) + 10]
+            } else {
+                domain = [0, 5]
+            }
+            
+            const y = d3.scaleLinear()
+                .domain(domain)
+                .range([height, 0])
+
+            const color = d3.scaleOrdinal()
+                .domain(data.map(d => d[0]))
+                .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse())
+
+            const svg = d3.select("#svg-container")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .attr("class", "shadow-lg rounded-lg bg-white m-10 bg-opacity-75")
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`)
+                
+
+            g.append("g")
+                .attr("transform", `translate(0, ${height})`)
+                .call(d3.axisBottom(x).tickFormat(d3.format("d"))) 
+
+            g.append("g")
+                .call(d3.axisLeft(y).ticks(10))
+
+            g.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", d => color(d[0]))
+                .attr("stroke-width", 1.5)
+                .attr("d", d3.line()
+                    .x(d => x(d[0]))
+                    .y(d => y(d[1]))
+                )
+
+            g.append("text")
+                .attr("x", width / 2)
+                .attr("y", 20)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .text(label)
+        }
+
+        d3.csv("ReelView.csv").then(data => {
+            console.log(data)
+            
+            const top10Runtimes = data.sort((a, b) => {
+                const aRuntime = parseFloat(a.run_time)
+                const bRuntime = parseFloat(b.run_time)
+                return bRuntime - aRuntime
+            })
+            .slice(0, 10)
+            .map(d => {
+                return [
+                    d.title,
+                    parseFloat(d.run_time)
+                ]
+            })
+            .sort((a, b) => a[0] - b[0])
+
+            const top10Years = d3.groups(data, d => d.release_date)
+                .filter(d => d[0] !== "")
+                .map(d => {
+                    const averageRating = d3.mean(d[1], d => d.stars_rating)
+                    return [
+                        d[0],
+                        averageRating
+                    ]
+                })
+                .sort((a, b) => b[0] - a[0])
+                //.slice(0, 10)
+
+            const top10Genres = d3.groups(data, d => d.genre.toLowerCase())
+                .map(d => {
+                    const averageRating = d3.mean(d[1], d => d.stars_rating)
+                    return [
+                        d[0],
+                        averageRating
+                    ]
+                })
+                .sort((a, b) => b.averageRating - a.averageRating)
+                .slice(0, 10)
+
+            console.log({top10Runtimes, top10Years, top10Genres})
+
+            makeGraph(top10Runtimes, "Longest Runtime in Minutes")
+            //makeGraph(top10Years, "Years with Best Average Rating")
+            makeGraph(top10Genres, "Genres with Best Average Rating")
+
+            makeLineGragh(top10Years, "Years By Average Rating")
+        })
+    </script>
+</body>
+</html>
